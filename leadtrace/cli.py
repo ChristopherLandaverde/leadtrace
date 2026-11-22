@@ -10,7 +10,7 @@ from .verifier import verify_lead_parity
 from .mcp import run_mcp_server
 
 def main():
-    parser = argparse.ArgumentParser(prog="leadtrace", description="FOCO Synthetic Lead Injector & Parity Daemon")
+    parser = argparse.ArgumentParser(prog="leadtrace", description="LeadTrace: send a synthetic lead and verify the CRM kept its original attribution.")
     sub = parser.add_subparsers(dest="command", required=True)
 
     gen_p = sub.add_parser("generate", help="Generate a tokenized synthetic lead")
@@ -52,7 +52,7 @@ def main():
         out_str = json.dumps(payload, indent=2)
         if args.out:
             Path(args.out).write_text(out_str, encoding="utf-8")
-            print(f"✔ Synthetic lead written to {args.out}")
+            print(f"✓ Synthetic lead written to {args.out}")
         else:
             print(out_str)
         sys.exit(0)
@@ -61,12 +61,12 @@ def main():
         lead = generate_synthetic_lead(source=args.source, medium=args.medium, campaign=args.campaign)
         payload = lead.to_capi_payload() if args.format == "capi" else (lead.to_form_payload() if args.format == "form" else lead.to_dict())
         print("=" * 60)
-        print("FOCO LEADTRACE: INGESTION DAEMON")
+        print("LEADTRACE / INJECT")
         print(f"Target: {args.url} (dry_run={args.dry_run})")
         print(f"Token:  {lead.token}")
         print("=" * 60)
         res = inject_lead(url=args.url, payload=payload, dry_run=args.dry_run)
-        print(f"Status: HTTP {res.status_code} (Success: {res.success})")
+        print(f"{'✓' if res.success else '×'} HTTP {res.status_code}")
         sys.exit(0 if res.success else 1)
 
     elif args.command == "verify":
@@ -74,16 +74,16 @@ def main():
         actual = json.loads(Path(args.actual).read_text(encoding="utf-8"))
         res = verify_lead_parity(expected, actual, max_latency_minutes=args.max_latency)
         print("=" * 60)
-        print("FOCO LEADTRACE: PARITY RECONCILIATION")
-        print(f"Sync Latency: {res.latency_minutes:.1f} min (Max SLA: {args.max_latency} min)")
+        print("LEADTRACE / VERIFY")
+        print(f"Sync latency: {res.latency_minutes:.1f} min (SLA: {args.max_latency} min)")
         print("=" * 60)
         if res.passed:
-            print("✔ PARITY CONFIRMED: All immutable touchpoints & click IDs preserved.")
+            print("✓ VERIFIED: every first-touch value and click ID matches the original lead.")
             sys.exit(0)
         else:
-            print(f"✖ PARITY DRIFT DETECTED: {len(res.errors)} error(s), {len(res.warnings)} warning(s)")
+            print(f"× BROKEN: {len(res.errors)} error(s), {len(res.warnings)} warning(s)")
             for err in res.errors:
-                print(f"  • [ERROR] {err.field}: {err.description}")
+                print(f"  × {err.field}: {err.description}")
             sys.exit(1)
 
     elif args.command == "audit":

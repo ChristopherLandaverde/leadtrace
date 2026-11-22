@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "leadtrace"
 version = "0.1.0"
-description = "Synthetic lead generator, automated ingestion tester, and CRM parity daemon for B2B RevOps. AI-agent ready (MCP)."
+description = "Send a synthetic lead through a webhook or sGTM endpoint and verify HubSpot kept its original attribution. CLI and MCP server."
 readme = "README.md"
-authors = [{ name = "Christopher Landaverde", email = "chris@focosys.io" }]
+authors = [{ name = "Christopher Landaverde", email = "christopher@focosys.io" }]
 license = { text = "MIT" }
 requires-python = ">=3.9"
 dependencies = []
