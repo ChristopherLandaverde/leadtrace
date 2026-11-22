@@ -1,18 +1,19 @@
 # LeadTrace
 
-LeadTrace sends one synthetic lead through your form webhook or server-side
-GTM endpoint. It then checks whether HubSpot still holds the attribution the
-lead started with.
+LeadTrace sends one synthetic lead through your landing page and form, your
+form webhook, or your server-side GTM endpoint. It then checks whether
+HubSpot still holds the attribution the lead started with.
 
-`Tool / README · v0.1.0 · HubSpot ingestion audit, assumptions, and limits`
+`Tool / README · v0.2.0 · HubSpot ingestion audit, assumptions, and limits`
 
 ```
 □ OBSERVED   one synthetic lead with 6 attribution fields: ft_source, ft_medium,
              ft_campaign, original_conversion_id, gclid, fbclid
-↓ TRACED     one POST to your endpoint, then a HubSpot contact search by the
-             lead's exact synthetic email
-× BROKEN     any field that is missing or changed in HubSpot, a contact that
-             is missing or duplicated, or a sync slower than the SLA
+↓ TRACED     the landing page and form in headless Chrome, or one POST to your
+             endpoint, then a HubSpot contact search by the exact email
+× BROKEN     a redirect that drops a tracking param, a hidden input that is
+             never filled, any field missing or changed in HubSpot, a contact
+             that is missing or duplicated, or a sync slower than the SLA
 ✓ VERIFIED   a JSON report with expected and actual values for each check.
              Exit 0 = every check passed. Exit 1 = at least one failed.
 ```
@@ -20,12 +21,14 @@ lead started with.
 ## Scope
 
 LeadTrace does:
+- check landing-page redirects, hidden form inputs, and the HubSpot record
+  the real form writes (`--mode browser`)
 - check the server endpoint and the HubSpot record it writes
 - check an sGTM receipt for the CAPI event it built (see below)
 
 LeadTrace does not:
-- test browser redirects or hidden form inputs. Submit the real form in a
-  separate browser test for those.
+- handle multi-step forms, forms in iframes (including embedded HubSpot
+  forms), CAPTCHAs, consent banners, or multipart form bodies
 - confirm that Meta received the event
 - look up Salesforce records or reconcile HubSpot with Salesforce (not in v1)
 
@@ -78,6 +81,40 @@ The audit:
 
 If the contact is not in search results by the deadline, the audit reports
 a timeout.
+
+### Browser form
+
+`--mode browser` runs the path a real ad click takes. Install the extra
+first:
+
+```sh
+python -m pip install '.[browser]'
+python -m playwright install chromium   # or point --browser-path at Chrome
+```
+
+```sh
+leadtrace audit https://staging.example.com/demo \
+  --mode browser \
+  --form-field ft_campaign=campaign_hidden
+```
+
+LeadTrace:
+1. Adds `utm_source`, `utm_medium`, `utm_campaign`, `gclid`, and `fbclid` to
+   the URL and opens it in headless Chromium. It follows redirects.
+2. Check `landing`: the final URL must still carry all 5 params. The
+   report lists any that were dropped.
+3. Fills `email`, `firstname`, `lastname`, `phone`, and `company` by
+   `[name=...]` (change these with `--selector FIELD=CSS`), then clicks
+   `--submit` (default `[type=submit]`).
+4. Check `form_capture`: the first POST after the click must carry each
+   tracking value, under the canonical name or its `utm_*` name. If the form
+   uses other names, map them with `--form-field FIELD=NAME`.
+5. Searches HubSpot and compares each field, as the other modes do. The page
+   creates `original_conversion_id`, so HubSpot is compared with the value the
+   form submitted.
+
+The form under test writes to HubSpot, so point it at a test portal. Exit code 2 means
+Playwright or the browser binary is missing.
 
 ### sGTM receipt
 

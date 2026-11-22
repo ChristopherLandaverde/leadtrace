@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 from .audit import audit_lead
+from .browser import BrowserUnavailable
 import sys
 from pathlib import Path
 from .generator import generate_synthetic_lead
@@ -36,11 +37,20 @@ def main():
 
     audit_p = sub.add_parser("audit", help="Inject a synthetic lead and reconcile HubSpot")
     audit_p.add_argument("url")
-    audit_p.add_argument("--mode", choices=["webhook", "sgtm"], default="webhook")
+    audit_p.add_argument("--mode", choices=["webhook", "sgtm", "browser"], default="webhook",
+                         help="browser: open URL as a landing page and submit its real form")
     audit_p.add_argument("--property", action="append", default=[], metavar="FIELD=INTERNAL_NAME")
     audit_p.add_argument("--max-latency", type=float, default=120)
     audit_p.add_argument("--wait-seconds", type=float, default=120)
     audit_p.add_argument("--poll-seconds", type=float, default=5)
+    audit_p.add_argument("--selector", action="append", default=[], metavar="FIELD=CSS",
+                         help="browser mode: CSS selector for email, firstname, lastname, phone, or company")
+    audit_p.add_argument("--form-field", action="append", default=[], metavar="FIELD=NAME",
+                         help="browser mode: name the form submits a tracking field under")
+    audit_p.add_argument("--submit", default="[type=submit]", metavar="CSS",
+                         help="browser mode: submit control selector")
+    audit_p.add_argument("--browser-path", default=os.environ.get("LEADTRACE_BROWSER"),
+                         help="browser mode: Chrome/Chromium binary (default: $LEADTRACE_BROWSER or Playwright's)")
 
     sub.add_parser("mcp", help="Run MCP stdio server for Claude/Cursor agents")
 
@@ -88,14 +98,24 @@ def main():
 
     elif args.command == "audit":
         try:
-            properties = dict(item.split("=", 1) for item in args.property)
+            pairs = {}
+            for flag in ("property", "selector", "form_field"):
+                items = getattr(args, flag)
+                if any("=" not in item for item in items):
+                    raise ValueError(f"--{flag.replace('_', '-')} takes KEY=VALUE.")
+                pairs[flag] = dict(item.split("=", 1) for item in items)
             report = audit_lead(
                 args.url, os.environ.get("HUBSPOT_ACCESS_TOKEN"), mode=args.mode,
-                properties=properties, max_latency_minutes=args.max_latency,
+                properties=pairs["property"], max_latency_minutes=args.max_latency,
                 wait_seconds=args.wait_seconds, poll_seconds=args.poll_seconds,
+                selectors=pairs["selector"], form_fields=pairs["form_field"],
+                submit=args.submit, browser_path=args.browser_path,
             )
         except ValueError as exc:
             audit_p.error(str(exc))
+        except BrowserUnavailable as exc:
+            print(f"× {exc}\nBrowser mode needs: pip install 'leadtrace[browser]'", file=sys.stderr)
+            sys.exit(2)
         print(json.dumps(report, indent=2))
         sys.exit(0 if report["passed"] else 1)
 

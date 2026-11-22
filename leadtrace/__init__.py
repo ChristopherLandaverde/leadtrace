@@ -2,7 +2,7 @@
 Author: Christopher Landaverde (FOCO Systems)
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from .generator import generate_synthetic_lead, SyntheticLead
 from .verifier import verify_lead_parity, ParityResult
