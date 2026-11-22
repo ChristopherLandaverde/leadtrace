@@ -20,6 +20,11 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parts = urlsplit(self.path)
+        if parts.path == "/redirect-private":
+            self.send_response(302)
+            self.send_header("Location", "http://0.0.0.0:9/latest/meta-data")
+            self.end_headers()
+            return
         if parts.path == "/redirect":
             # Drops gclid on the way to the landing page.
             query = {k: v[0] for k, v in parse_qs(parts.query).items() if k != "gclid"}

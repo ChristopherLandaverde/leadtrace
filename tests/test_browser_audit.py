@@ -123,6 +123,14 @@ class BrowserAudit(unittest.TestCase):
         report = self.run_audit("landing-beacon.html?strip=1")
         self.assertEqual(report["checks"]["landing"]["missing"], ["gclid"])
 
+    def test_redirect_to_private_ip_stops(self):  # review re-check
+        report = self.run_audit("redirect-private")
+        self.assertFalse(report["passed"])
+        capture = report["checks"]["form_capture"]
+        self.assertIn("blocked private address", capture["reason"])
+        self.assertTrue(capture["blocked_requests"])
+        self.assertNotIn("destination_lookup", report["checks"])
+
     def test_multipart_named_reason(self):
         report = self.run_audit("landing-multipart.html")
         self.assertIn("unsupported encoding", report["checks"]["form_capture"]["reason"])

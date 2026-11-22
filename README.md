@@ -119,8 +119,11 @@ LeadTrace:
    form submitted.
 
 The browser blocks requests to literal private and link-local IPs, such
-as `169.254.169.254`. They are listed in `blocked_requests`. Loopback stays
-allowed for local test sites.
+as `169.254.169.254`. They are listed in `blocked_requests`. If the landing
+page redirects to one, the run stops before the form. Playwright cannot
+intercept redirect hops, so that one hop is still sent. Hostnames that
+resolve to private ranges are not checked. Loopback stays allowed for local
+test sites.
 
 The form under test writes to HubSpot, so point it at a test portal. Exit code 2 means
 Playwright or the browser binary is missing.

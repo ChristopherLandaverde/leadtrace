@@ -125,7 +125,18 @@ def submit_form(url, fields, *, selectors=None, submit="[type=submit]", browser_
             page = browser.new_page()
             page.set_default_timeout(STEP_TIMEOUT_MS)
             page.route("**/*", guard)
-            page.goto(url, wait_until="load")
+            # Routing does not see redirect hops, so record every navigation hop too.
+            page.on("request", lambda req: result["blocked"].append(req.url)
+                    if req.is_navigation_request() and blocked_host(req.url) else None)
+            try:
+                page.goto(url, wait_until="load")
+            except PlaywrightError:
+                if not result["blocked"]:
+                    raise
+            if result["blocked"] or blocked_host(page.url):
+                result["final_url"] = page.url
+                result["error"] = "Landing page redirected to a blocked private address; stopped before the form."
+                return result
             try:
                 page.wait_for_load_state("networkidle", timeout=SETTLE_TIMEOUT_MS)
             except PlaywrightTimeout:
