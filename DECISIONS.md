@@ -23,3 +23,12 @@ Decided without approval. Each one is reversible on this branch.
 - **#6 `text/plain` parsed as JSON first. #7 Empty canonical name no longer masks a filled alias. #8 Install hint only on a missing import, launch failure gets its own hint. #9 Tests added for flags, encodings, and the missing email field. #10 `--no-sandbox` only when running as root.**
 - **Re-check: redirects bypassed the IP guard.** Every navigation hop is now checked. A blocked hop stops the run before the form is touched (test: `test_redirect_to_private_ip_stops`). Limit, also in the README: Playwright cannot intercept redirect hops, so the hop itself is still sent once.
 - **Reviewer nit kept as a known limit:** a third-party beacon that carries the synthetic email *and* all 5 tracking values would be taken as the form. `submit_url` and `other_posts` are in the report so this is visible.
+
+## Brand pass 2: trace output, DESIGN.md, social preview (2026-11-22)
+
+- **`audit --format auto` is the default:** a trace record on a TTY, JSON when piped. Scripts and CI that parse the JSON keep working, and people at a terminal get the record. `--format json|trace` forces one.
+- **`verify` now reports unknown latency as unknown.** It used to report `0.0`, which showed as a false `✓`. `ParityResult.latency_minutes` is `None` when a timestamp is missing, so the MCP tool returns `null` there too.
+- **Token values not given by the brand skill were chosen and need checking against the focosys.io DESIGN.md:** `paper #f7f7f5`, `ink-muted #5b636a`, `rule #d9dcdf`, `status-broken #b42318`, `status-verified #1a7f37`.
+- **Plex Mono lacks `□`, and its `✓` reads as `V` at display size.** Inter is used for those two glyphs in the preview image.
+- **ASCII fallback for terminals that cannot encode the glyphs** (Windows cp1252): `□ -` `↓ v` `× x` `✓ +`.
+- **The README example is real output** from the local test site, not hand-written.

@@ -9,6 +9,7 @@ from .generator import generate_synthetic_lead
 from .client import inject_lead
 from .verifier import verify_lead_parity
 from .mcp import run_mcp_server
+from . import trace
 
 def main():
     parser = argparse.ArgumentParser(prog="leadtrace", description="LeadTrace: send a synthetic lead and verify the CRM kept its original attribution.")
@@ -49,6 +50,8 @@ def main():
                          help="browser mode: name the form submits a tracking field under")
     audit_p.add_argument("--submit", default="[type=submit]", metavar="CSS",
                          help="browser mode: submit control selector")
+    audit_p.add_argument("--format", choices=["auto", "json", "trace"], default="auto",
+                         help="auto: trace record on a terminal, JSON when piped (default)")
     audit_p.add_argument("--browser-path", default=os.environ.get("LEADTRACE_BROWSER"),
                          help="browser mode: Chrome/Chromium binary (default: $LEADTRACE_BROWSER or Playwright's)")
 
@@ -62,7 +65,7 @@ def main():
         out_str = json.dumps(payload, indent=2)
         if args.out:
             Path(args.out).write_text(out_str, encoding="utf-8")
-            print(f"✓ Synthetic lead written to {args.out}")
+            print(trace._safe(f"→ {args.format} payload written to {args.out}", sys.stdout))
         else:
             print(out_str)
         sys.exit(0)
@@ -70,31 +73,39 @@ def main():
     elif args.command == "inject":
         lead = generate_synthetic_lead(source=args.source, medium=args.medium, campaign=args.campaign)
         payload = lead.to_capi_payload() if args.format == "capi" else (lead.to_form_payload() if args.format == "form" else lead.to_dict())
-        print("=" * 60)
-        print("LEADTRACE / INJECT")
-        print(f"Target: {args.url} (dry_run={args.dry_run})")
-        print(f"Token:  {lead.token}")
-        print("=" * 60)
+        trace.header("INJECT", f"{args.format} payload" + (" · dry run" if args.dry_run else ""))
+        trace.row("□ OBSERVED", f"lead {lead.token}")
+        trace.row("↓ TRACED", f"POST → {args.url}")
         res = inject_lead(url=args.url, payload=payload, dry_run=args.dry_run)
-        print(f"{'✓' if res.success else '×'} HTTP {res.status_code}")
+        detail = f"HTTP {res.status_code}" + (f" · {res.error_message}" if res.error_message else "")
+        trace.verdict(res.success, ("endpoint accepted the lead · " if res.success
+                                    else "endpoint rejected the lead · ") + detail)
         sys.exit(0 if res.success else 1)
 
     elif args.command == "verify":
         expected = json.loads(Path(args.expected).read_text(encoding="utf-8"))
         actual = json.loads(Path(args.actual).read_text(encoding="utf-8"))
         res = verify_lead_parity(expected, actual, max_latency_minutes=args.max_latency)
-        print("=" * 60)
-        print("LEADTRACE / VERIFY")
-        print(f"Sync latency: {res.latency_minutes:.1f} min (SLA: {args.max_latency} min)")
-        print("=" * 60)
-        if res.passed:
-            print("✓ VERIFIED: every first-touch value and click ID matches the original lead.")
-            sys.exit(0)
+        trace.header("VERIFY", "offline fixture comparison")
+        trace.row("□ OBSERVED", f"expected {args.expected}")
+        trace.row("↓ TRACED", f"actual   {args.actual}")
+        print()
+        latency = res.latency_minutes
+        if latency is None:
+            mark, shown = "□", "unknown · no timestamp in one of the records"
         else:
-            print(f"× BROKEN: {len(res.errors)} error(s), {len(res.warnings)} warning(s)")
-            for err in res.errors:
-                print(f"  × {err.field}: {err.description}")
-            sys.exit(1)
+            mark, shown = trace.status(latency <= args.max_latency), f"{latency:.1f} min"
+        print(trace._safe(f"{mark} {'sync_latency':<{trace.NAME}}{shown} (SLA {args.max_latency:g} min)", sys.stdout))
+        for issue in res.errors:
+            print(trace._safe(f"{trace.status(False)} {issue.field:<{trace.NAME}}{issue.description}", sys.stdout))
+        for issue in res.warnings:
+            print(trace._safe(f"□ {issue.field:<{trace.NAME}}warning · {issue.description}", sys.stdout))
+        if res.passed and not res.warnings:
+            print(trace._safe(f"{trace.status(True)} {'first_touch_fields':<{trace.NAME}}every value and click ID matches",
+                              sys.stdout))
+        trace.verdict(res.passed, "first-touch values and click IDs match" if res.passed
+                      else f"{len(res.errors)} error(s), {len(res.warnings)} warning(s)")
+        sys.exit(0 if res.passed else 1)
 
     elif args.command == "audit":
         try:
@@ -116,7 +127,11 @@ def main():
         except BrowserUnavailable as exc:
             print(f"× {exc}", file=sys.stderr)
             sys.exit(2)
-        print(json.dumps(report, indent=2))
+        use_trace = args.format == "trace" or (args.format == "auto" and sys.stdout.isatty())
+        if use_trace:
+            trace.render_audit(report, args.mode)
+        else:
+            print(json.dumps(report, indent=2))
         sys.exit(0 if report["passed"] else 1)
 
     elif args.command == "mcp":

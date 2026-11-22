@@ -12,7 +12,7 @@ class ParityDiscrepancy:
 @dataclass
 class ParityResult:
     passed: bool
-    latency_minutes: float
+    latency_minutes: Optional[float]  # None when either timestamp is missing
     discrepancies: List[ParityDiscrepancy] = field(default_factory=list)
 
     @property
@@ -92,7 +92,7 @@ def verify_lead_parity(
 
     created_ts = expected_lead.get("created_timestamp")
     dest_ts = _find_field_value(destination_record, ["created_timestamp", "synced_timestamp", "createddate"])
-    latency = 0.0
+    latency = None
 
     if created_ts and dest_ts:
         try:
