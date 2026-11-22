@@ -19,18 +19,20 @@ glyph (`□`) or draws it poorly (`✓` at display sizes), fall back to Inter fo
 
 ## Color
 
+Focosys family tokens, the same set as PipeTrace, OSRA and Rabbit:
+
 | Token | Value | Use |
 |---|---|---|
-| `ink` | `#1e2327` | all text and rules (light mode) |
-| `paper` | `#f7f7f5` | background (light mode) |
-| `ink-muted` | `#5b636a` | metadata lines |
-| `rule` | `#d9dcdf` | thin rules, 1 px |
-| `status-broken` | `#b42318` | `×` only |
-| `status-verified` | `#1a7f37` | `✓` only |
+| `ink-primary` | `#10231F` | text, rules, logo tile, dark output boxes |
+| `surface-paper` | `#F3F0E6` | backgrounds, stage boxes, text on ink |
+| `surface-source` | `#EBE8DE` | input/source boxes in diagrams |
+| `ink-muted` | `#426B5D` | metadata, mono detail text, section labels |
+| `state-verified` | `#D7FF69` | `✓` and verified totals, only on `ink-primary` |
 
-Dark mode inverts `ink` and `paper`. Color appears only as status, never as
-decoration. In the terminal, status color is ANSI red/green, only on a TTY,
-and never when `NO_COLOR` is set.
+`state-verified` lime is only used on the dark ink, never on paper, because
+it has no contrast there. The family has no red token, so `×` is drawn in
+ink. In the terminal, status color is ANSI red/green, only on a TTY, and
+never when `NO_COLOR` is set.
 
 ## Glyphs
 

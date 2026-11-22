@@ -33,3 +33,10 @@ Decided without approval. Each one is reversible on this branch.
 - **ASCII fallback for terminals that cannot encode the glyphs** (Windows cp1252): `□ -` `↓ v` `× x` `✓ +`.
 - **The README example is real output** from the local test site, not hand-written.
 - **Review (Sonnet): 0 blockers, 3 should-fix, all fixed.** Failure details now come from each check's own pass/fail. The renderer tolerates missing keys, and a render error falls back to JSON so a finished audit is never lost. A late sync shows once in `verify`. Nits fixed: the `generate --out` message is unchanged from before, the dry run says "nothing sent", early stops say later checks did not run, and negative latency is explained. Nit kept: a `created_timestamp` of 0 counts as missing (old behavior, unrealistic value).
+
+## Brand pass 3: visual parity with PipeTrace (2026-11-22)
+
+- **Replaced the invented tokens with the Focosys family tokens from PipeTrace** (`#10231F`, `#F3F0E6`, `#EBE8DE`, `#426B5D`, `#D7FF69`). The brand skill only specified `#1e2327`. The rest had been guessed and did not match PipeTrace, OSRA or Rabbit.
+- **README header matches PipeTrace's structure:** logo, centered title, incident-sentence claim, evidence line, badges in `#10231F`, nav row, metadata line, flow diagram.
+- **Logo in the same family:** a paper lead dot, two handoff rings, a lime verified bar.
+- **Lime only on ink:** it has no contrast on paper. The family has no red, so `×` is ink in the images. The terminal keeps ANSI red/green.

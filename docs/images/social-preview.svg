@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <style>
+    .t{font:500 76px Inter,sans-serif;fill:#10231F}
+    .c{font:400 30px Inter,sans-serif;fill:#10231F}
+    .l{font:600 20px 'IBM Plex Mono',monospace;fill:#426B5D;letter-spacing:.06em}
+    .m{font:400 23px 'IBM Plex Mono',monospace;fill:#10231F}
+    .k{font:500 23px 'IBM Plex Mono',monospace;fill:#10231F}
+    .w{font:400 23px 'IBM Plex Mono',monospace;fill:#F3F0E6}
+    .v{font:500 23px 'IBM Plex Mono',monospace;fill:#D7FF69}
+    .f{font:400 19px 'IBM Plex Mono',monospace;fill:#426B5D}
+  </style>
+  <rect width="1280" height="640" fill="#F3F0E6"/>
+  <g transform="translate(96 72) scale(0.4375)">  <rect width="256" height="256" rx="56" fill="#10231F"/>
+  <path d="M74 128 L 176 128" fill="none" stroke="#F3F0E6" stroke-width="18" stroke-linecap="round" stroke-opacity="0.8"/>
+  <circle cx="112" cy="128" r="17" fill="#10231F" stroke="#F3F0E6" stroke-width="10" stroke-opacity="0.55"/>
+  <circle cx="150" cy="128" r="17" fill="#10231F" stroke="#F3F0E6" stroke-width="10" stroke-opacity="0.8"/>
+  <circle cx="62" cy="128" r="22" fill="#F3F0E6"/>
+  <path d="M176 128 L 186 128" fill="none" stroke="#D7FF69" stroke-width="18" stroke-linecap="round"/>
+  <path d="M202 88 L 202 168" fill="none" stroke="#D7FF69" stroke-width="20" stroke-linecap="round"/></g>
+  <text class="l" x="226" y="104">TOOL / OPEN SOURCE</text>
+  <text class="t" x="222" y="170">LeadTrace</text>
+  <text class="c" x="96" y="262">Send a synthetic lead through your landing page and form.</text>
+  <text class="c" x="96" y="302">Verify HubSpot kept the attribution it started with.</text>
+  <path d="M96 352 H1184" stroke="#10231F" stroke-opacity=".18" stroke-width="1.5"/>
+  <text class="k" x="96" y="402">□ OBSERVED</text><text class="m" x="290" y="402">6 fields · utm_* · gclid · fbclid</text>
+  <text class="k" x="96" y="446">↓ TRACED</text><text class="m" x="290" y="446">landing → form POST → HubSpot</text>
+  <text class="k" x="96" y="490">× BROKEN</text><text class="m" x="290" y="490">redirect dropped gclid</text>
+  <rect x="792" y="374" width="392" height="134" rx="14" fill="#10231F"/>
+  <text class="v" x="820" y="414">✓ ft_source</text>
+  <text class="v" x="820" y="450">✓ form_capture</text>
+  <text class="w" x="820" y="486">× gclid  expected / got ""</text>
+  <path d="M96 548 H1184" stroke="#10231F" stroke-opacity=".18" stroke-width="1.5"/>
+  <text class="f" x="96" y="588">github.com/ChristopherLandaverde/leadtrace</text>
+  <text class="f" x="1184" y="588" text-anchor="end">FOCO Systems · focosys.io ↗</text>
+</svg>

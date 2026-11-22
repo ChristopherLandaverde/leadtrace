@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="300" viewBox="0 0 880 300" role="img" aria-label="LeadTrace flow. A synthetic lead with utm_source, utm_medium, utm_campaign, gclid and fbclid opens the landing page in headless Chromium. Check landing: the URL at submit still carries all five params, so redirects and scripts that strip them are caught. The real form is filled and submitted. Check form_capture: the POST carrying the synthetic email has every tracking value, so hidden inputs that never fill are caught. HubSpot contact search by exact email. Checks: each field matches what was sent, and sync latency is inside the SLA. Output: a trace record with a check or a cross per field, exit 0 or 1.">
+  <style>
+    .box{fill:#F3F0E6;stroke:#10231F;stroke-opacity:.18;stroke-width:1.5}
+    .src{fill:#EBE8DE;stroke:#10231F;stroke-opacity:.18;stroke-width:1.5}
+    .out{fill:#10231F}
+    .t{font:500 14px Inter,system-ui,-apple-system,sans-serif;fill:#10231F}
+    .m{font:12px 'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;fill:#426B5D}
+    .w{font:500 14px Inter,system-ui,-apple-system,sans-serif;fill:#FFFFFF}
+    .wm{font:12px 'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;fill:#FFFFFF;fill-opacity:.8}
+    .v{font:500 12px 'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;fill:#D7FF69}
+    .k{font:500 12px 'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;fill:#10231F}
+    .l{font:600 11px 'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;fill:#426B5D;letter-spacing:.06em}
+    .a{fill:none;stroke:#10231F;stroke-opacity:.45;stroke-width:1.5}
+  </style>
+  <rect width="880" height="300" fill="#F3F0E6"/>
+  <defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#10231F" fill-opacity=".45"/></marker></defs>
+
+  <text class="l" x="16" y="24">□ OBSERVED</text>
+  <text class="l" x="196" y="24">↓ TRACED</text>
+  <text class="l" x="706" y="24">✓ / × RECORD</text>
+
+  <rect class="src" x="16" y="40" width="150" height="104" rx="10"/>
+  <text class="t" x="30" y="66">Synthetic lead</text>
+  <text class="m" x="30" y="88">utm_source</text>
+  <text class="m" x="30" y="104">utm_medium</text>
+  <text class="m" x="30" y="120">utm_campaign</text>
+  <text class="m" x="30" y="136">gclid · fbclid</text>
+
+  <rect class="box" x="196" y="40" width="150" height="104" rx="10"/>
+  <text class="t" x="210" y="66">Landing page</text>
+  <text class="m" x="210" y="88">headless Chromium</text>
+  <text class="m" x="210" y="104">follows redirects</text>
+  <text class="m" x="210" y="120">waits for scripts</text>
+
+  <rect class="box" x="376" y="40" width="150" height="104" rx="10"/>
+  <text class="t" x="390" y="66">Form POST</text>
+  <text class="m" x="390" y="88">real form, filled</text>
+  <text class="m" x="390" y="104">matched by email</text>
+  <text class="m" x="390" y="120">beacons ignored</text>
+
+  <rect class="box" x="556" y="40" width="130" height="104" rx="10"/>
+  <text class="t" x="570" y="66">HubSpot</text>
+  <text class="m" x="570" y="88">contact search</text>
+  <text class="m" x="570" y="104">exact email</text>
+  <text class="m" x="570" y="120">read-only</text>
+
+  <rect class="out" x="716" y="40" width="148" height="104" rx="10"/>
+  <text class="w" x="730" y="66">Trace record</text>
+  <text class="v" x="730" y="88">✓ per field</text>
+  <text class="wm" x="730" y="104">× expected / got</text>
+  <text class="wm" x="730" y="120">exit 0 or 1</text>
+
+  <path class="a" d="M166 92 L 194 92" marker-end="url(#h)"/>
+  <path class="a" d="M346 92 L 374 92" marker-end="url(#h)"/>
+  <path class="a" d="M526 92 L 554 92" marker-end="url(#h)"/>
+  <path class="a" d="M686 92 L 714 92" marker-end="url(#h)"/>
+
+  <path class="a" d="M271 144 L 271 176"/>
+  <path class="a" d="M451 144 L 451 176"/>
+  <path class="a" d="M621 144 L 621 176"/>
+  <text class="k" x="196" y="196">landing</text>
+  <text class="m" x="196" y="214">redirect or script</text>
+  <text class="m" x="196" y="230">dropped a param</text>
+  <text class="k" x="376" y="196">form_capture</text>
+  <text class="m" x="376" y="214">hidden input</text>
+  <text class="m" x="376" y="230">never filled</text>
+  <text class="k" x="556" y="196">fields · sync_latency</text>
+  <text class="m" x="556" y="214">overwritten, missing,</text>
+  <text class="m" x="556" y="230">or slower than the SLA</text>
+  <text class="l" x="16" y="196">× CATCHES</text>
+  <text class="m" x="16" y="276">Browser mode shown. Webhook and sGTM modes start at the HubSpot step.</text>
+</svg>
