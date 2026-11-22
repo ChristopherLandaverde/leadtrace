@@ -1,4 +1,5 @@
 import argparse
+import io
 import json
 import os
 from .audit import audit_lead
@@ -134,8 +135,13 @@ def main():
             sys.exit(2)
         use_trace = args.format == "trace" or (args.format == "auto" and sys.stdout.isatty())
         if use_trace:
+            class Buffer(io.StringIO):  # render fully before writing, so a bug never mixes output
+                encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+                isatty = staticmethod(sys.stdout.isatty)
+            buffer = Buffer()
             try:
-                trace.render_audit(report, args.mode)
+                trace.render_audit(report, args.mode, buffer)
+                sys.stdout.write(buffer.getvalue())
             except Exception:  # never lose a finished audit to a rendering bug
                 print(json.dumps(report, indent=2))
         else:
