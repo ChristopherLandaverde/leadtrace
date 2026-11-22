@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="t">
+  <title id="t">LeadTrace: one synthetic lead traced through two handoff checkpoints to a verified record</title>
+  <!-- Focosys tokens, same family as PipeTrace, OSRA and Rabbit: ink-primary tile, surface-paper lead, state-verified record. -->
+  <rect width="256" height="256" rx="56" fill="#10231F"/>
+  <path d="M74 128 L 176 128" fill="none" stroke="#F3F0E6" stroke-width="18" stroke-linecap="round" stroke-opacity="0.8"/>
+  <circle cx="112" cy="128" r="17" fill="#10231F" stroke="#F3F0E6" stroke-width="10" stroke-opacity="0.55"/>
+  <circle cx="150" cy="128" r="17" fill="#10231F" stroke="#F3F0E6" stroke-width="10" stroke-opacity="0.8"/>
+  <circle cx="62" cy="128" r="22" fill="#F3F0E6"/>
+  <path d="M176 128 L 186 128" fill="none" stroke="#D7FF69" stroke-width="18" stroke-linecap="round"/>
+  <path d="M202 88 L 202 168" fill="none" stroke="#D7FF69" stroke-width="20" stroke-linecap="round"/>
+</svg>

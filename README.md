@@ -1,10 +1,37 @@
-# LeadTrace
+<p align="center">
+  <img src="docs/images/logo.png" width="96" height="96" alt="LeadTrace logo: one paper lead dot traced through two handoff rings on a dark green tile, ending at a lime verified bar">
+</p>
 
-LeadTrace sends one synthetic lead through your landing page and form, your
-form webhook, or your server-side GTM endpoint. It then checks whether
-HubSpot still holds the attribution the lead started with.
+<h1 align="center">LeadTrace</h1>
 
-`Tool / README · v0.2.0 · HubSpot ingestion audit, assumptions, and limits`
+<p align="center">
+  <strong>A paid click can reach HubSpot labeled as direct, and nothing in the pipeline throws an error. Send one synthetic lead through your landing page and form, and see the handoff where the attribution changed.</strong>
+</p>
+
+<p align="center">
+  3 audit modes: browser, webhook, sGTM · 6 attribution fields checked per lead · 40 tests in CI on Python 3.9–3.12, 14 of them driving real headless Chrome · read-only on HubSpot · no runtime dependencies in the core CLI
+</p>
+
+<p align="center">
+  <a href="https://github.com/ChristopherLandaverde/leadtrace/actions/workflows/ci.yml"><img src="https://github.com/ChristopherLandaverde/leadtrace/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/python-3.9%E2%80%933.12-10231F" alt="Python 3.9 to 3.12"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-10231F" alt="License: MIT"></a>
+</p>
+
+<p align="center">
+  <a href="#the-trace">The trace</a> · <a href="#scope">Scope</a> · <a href="#run-a-hubspot-audit">Run an audit</a> · <a href="#browser-form">Browser form</a> · <a href="#output">Output</a> · <a href="CHANGELOG.md">Changelog</a> · <a href="https://focosys.io">focosys.io ↗</a>
+</p>
+
+`CLI · Nov 2026 · v0.2.0 · Implementation notes, assumptions, and limits · Walkthrough / no client data`
+
+LeadTrace is a command-line audit for marketing ops and RevOps engineers who need to trust the first-touch fields in HubSpot before reporting on them. By Christopher Landaverde, FOCO Systems. It sends one synthetic lead through your landing page and form, your form webhook, or your server-side GTM endpoint. It then checks whether HubSpot still holds the attribution the lead started with.
+
+<p align="center">
+  <img src="docs/images/flow.svg" width="880" alt="LeadTrace flow. A synthetic lead with utm_source, utm_medium, utm_campaign, gclid and fbclid opens the landing page in headless Chromium. Check landing: the URL at submit still carries all five params. The real form is filled and submitted. Check form_capture: the POST carrying the synthetic email has every tracking value. HubSpot contact search by exact email. Checks: each field matches what was sent, and sync latency is inside the SLA. Output: a trace record, exit 0 or 1.">
+  <br><sub>Browser mode shown. Check names match the report keys.</sub>
+</p>
+
+## The trace
 
 ```
 □ OBSERVED   one synthetic lead with 6 attribution fields: ft_source, ft_medium,
@@ -14,8 +41,9 @@ HubSpot still holds the attribution the lead started with.
 × BROKEN     a redirect that drops a tracking param, a hidden input that is
              never filled, any field missing or changed in HubSpot, a contact
              that is missing or duplicated, or a sync slower than the SLA
-✓ VERIFIED   a JSON report with expected and actual values for each check.
-             Exit 0 = every check passed. Exit 1 = at least one failed.
+✓ VERIFIED   a trace record on a terminal, JSON when piped, with expected and
+             actual values for each check. Exit 0 = every check passed.
+             Exit 1 = at least one failed.
 ```
 
 ## Scope
