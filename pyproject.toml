@@ -4,13 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "leadtrace"
-version = "0.1.0"
+version = "0.2.0"
 description = "Send a synthetic lead through a webhook or sGTM endpoint and verify HubSpot kept its original attribution. CLI and MCP server."
 readme = "README.md"
 authors = [{ name = "Christopher Landaverde", email = "christopher@focosys.io" }]
 license = { text = "MIT" }
 requires-python = ">=3.9"
 dependencies = []
+
+[project.optional-dependencies]
+browser = ["playwright>=1.40"]
 
 [project.scripts]
 leadtrace = "leadtrace.cli:main"

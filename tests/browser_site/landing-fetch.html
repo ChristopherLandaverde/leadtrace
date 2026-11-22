@@ -1,0 +1,28 @@
+<!doctype html><html><body>
+<form id="f">
+  <label>Email <input name="email" type="email"></label>
+  <label>First <input name="firstname"></label>
+  <label>Last <input name="lastname"></label>
+  <label>Phone <input name="phone"></label>
+  <label>Company <input name="company"></label>
+  <input type="hidden" name="utm_source"><input type="hidden" name="utm_medium">
+  <input type="hidden" name="utm_campaign"><input type="hidden" name="gclid">
+  <input type="hidden" name="fbclid"><input type="hidden" name="original_conversion_id">
+  <button type="submit">Send</button>
+</form>
+<script src="/populate.js"></script>
+<script>
+document.getElementById("f").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var data = Object.fromEntries(new FormData(e.target));
+  var body = {
+    email: data.email, firstname: data.firstname, lastname: data.lastname,
+    phone: data.phone, company: data.company, ft_source: data.utm_source,
+    ft_medium: data.utm_medium, ft_campaign: data.utm_campaign,
+    gclid: data.gclid, fbclid: data.fbclid,
+    original_conversion_id: data.original_conversion_id
+  };
+  fetch("/submit-json", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(body)}).then(function () { document.body.dataset.done = "1"; });
+});
+</script></body></html>

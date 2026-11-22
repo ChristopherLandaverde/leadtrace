@@ -37,7 +37,7 @@ def inject_lead(
             is_dry_run=True
         )
 
-    req_headers = {"User-Agent": "FOCO-LeadTrace/0.1.0"}
+    req_headers = {"User-Agent": "FOCO-LeadTrace/0.2.0"}
     if headers:
         req_headers.update(headers)
 
