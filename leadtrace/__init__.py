@@ -1,5 +1,5 @@
-"""leadtrace: Synthetic Lead Generator & Ingestion Parity Daemon
-Author: Christopher Landaverde (FOCO / Focosys)
+"""LeadTrace: verify that a synthetic lead keeps its attribution from ingestion to CRM.
+Author: Christopher Landaverde (FOCO Systems)
 """
 
 __version__ = "0.1.0"

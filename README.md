@@ -1,54 +1,98 @@
 # LeadTrace
 
-Send a synthetic lead through a form webhook or server-side Google Tag Manager
-(sGTM), then verify that HubSpot received the original attribution fields.
-Developed by Christopher Landaverde (Focosys).
+LeadTrace sends one synthetic lead through your form webhook or server-side
+GTM endpoint. It then checks whether HubSpot still holds the attribution the
+lead started with.
+
+`Tool / README · v0.1.0 · HubSpot ingestion audit, assumptions, and limits`
+
+```
+□ OBSERVED   one synthetic lead with 6 attribution fields: ft_source, ft_medium,
+             ft_campaign, original_conversion_id, gclid, fbclid
+↓ TRACED     one POST to your endpoint, then a HubSpot contact search by the
+             lead's exact synthetic email
+× BROKEN     any field that is missing or changed in HubSpot, a contact that
+             is missing or duplicated, or a sync slower than the SLA
+✓ VERIFIED   a JSON report with expected and actual values for each check.
+             Exit 0 = every check passed. Exit 1 = at least one failed.
+```
+
+## Scope
+
+LeadTrace does:
+- check the server endpoint and the HubSpot record it writes
+- check an sGTM receipt for the CAPI event it built (see below)
+
+LeadTrace does not:
+- test browser redirects or hidden form inputs. Submit the real form in a
+  separate browser test for those.
+- confirm that Meta received the event
+- look up Salesforce records or reconcile HubSpot with Salesforce (not in v1)
+
+All test data is synthetic. Send it only to test portals and test
+destinations.
+
+## Why this exists
+
+CRM merge and sync logic can overwrite first-touch values without raising
+an error. One example: a field keeps whichever value was written last, not
+the original UTM value. The report still says "paid", but the record
+underneath has changed. LeadTrace catches the change at ingestion, before
+anyone makes a budget decision from that report.
 
 ## Run a HubSpot audit
 
-Install with `python -m pip install .` on Python 3.9 or later. The CLI uses
-the Python standard library at runtime.
+You need Python 3.9 or later. LeadTrace has no runtime dependencies beyond
+the standard library.
 
-1. Use a test webhook that accepts a flat JSON lead and sends it to a test
-   HubSpot portal. Configure the destination contact properties for
+```sh
+python -m pip install .
+```
+
+1. Point a test webhook at a test HubSpot portal. The webhook must accept a
+   flat JSON lead. In the portal, create contact properties for
    `ft_source`, `ft_medium`, `ft_campaign`, `original_conversion_id`,
    `gclid`, and `fbclid`.
-2. Set `HUBSPOT_ACCESS_TOKEN` in your environment using a HubSpot private
-   app token with `crm.objects.contacts.read`.
-3. Run the audit against your endpoint.
+2. Create a HubSpot private app token with the `crm.objects.contacts.read`
+   scope. Set it as `HUBSPOT_ACCESS_TOKEN` in your environment.
+3. Run the audit against your endpoint:
 
 ```sh
 leadtrace audit https://your-test-endpoint.example/lead \
   --property ft_source=first_touch_source
 ```
 
-Repeat `--property FIELD=INTERNAL_NAME` for any HubSpot properties that
-use different internal names. The audit sends one POST, requires HTTP 200
-or 201, polls HubSpot contact search by exact synthetic email, and reports
-each check as JSON. Missing or modified attribution and click IDs fail the
-audit. Exit code 0 means all checks passed, and exit code 1 means a check failed.
+If a HubSpot property uses a different internal name, map it with
+`--property FIELD=INTERNAL_NAME`. You can repeat the flag.
 
-The default SLA is 120 minutes from dispatch to HubSpot contact creation.
-Search visibility is a separate limit. The default search window is 120
-seconds. Set `--wait-seconds 7200` to wait up to two hours and
-`--poll-seconds` to control how often each search runs. The audit reports
-a timeout if HubSpot search has yet to return the record by the deadline.
+The audit:
+- sends one POST and expects HTTP 200 or 201
+- searches HubSpot for the lead's exact synthetic email
+- compares each field with the value it sent
 
-The POST exercises the configured server endpoint. To test browser
-redirects and hidden inputs, submit through the actual browser form in a
-separate browser-based test.
+| Limit | Default | Flag |
+|---|---|---|
+| SLA from dispatch to HubSpot `createdate` | 120 minutes | `--max-latency` |
+| Time to wait for the contact to show up in search | 120 seconds | `--wait-seconds` (`7200` = 2 hours) |
+| Time between searches | 5 seconds | `--poll-seconds` |
+
+If the contact is not in search results by the deadline, the audit reports
+a timeout.
 
 ### sGTM receipt
 
-Use `--mode sgtm` when the endpoint can return a JSON receipt containing
-the outbound CAPI event under `capi_event`. The same flat JSON lead is
-posted so the endpoint can send it to HubSpot and build the CAPI event.
-LeadTrace compares the receipt's `event_id` to the lead's
-`original_conversion_id` and checks `user_data.em` and `user_data.ph`
-against the SHA-256 hashes of the synthetic email and phone. Return the
-event the server actually constructed. This verifies the receipt, while
-Meta delivery requires separate evidence. Route synthetic events to test
-destinations.
+Use `--mode sgtm` when your endpoint returns a JSON receipt with the
+outbound CAPI event under `capi_event`. LeadTrace posts the same flat JSON
+lead. Your endpoint sends it to HubSpot and builds the CAPI event.
+
+LeadTrace then checks the receipt:
+- `event_id` must match the lead's `original_conversion_id`
+- `user_data.em` and `user_data.ph` must match the SHA-256 hashes of the
+  synthetic email and phone
+
+Return the event your server actually built, not a copy of the input. This
+checks the receipt only. You need separate evidence that Meta received the
+event.
 
 ## Local tools
 
@@ -60,10 +104,17 @@ leadtrace mcp
 python -m unittest discover -s tests -v
 ```
 
-The existing offline verifier and MCP tools can generate test payloads
-and inspect fixtures. The `audit` command performs the strict HubSpot
-checks. The test suite runs the audit through mocked HTTP responses for the webhook and
-HubSpot search, with no live CRM credentials.
+- `generate` builds test payloads.
+- `verify` compares fixture files offline.
+- `mcp` runs the same tools as an MCP stdio server, so an agent can call
+  them.
+- `audit` is the only command that runs the strict HubSpot checks.
 
-Salesforce lookup and HubSpot-to-Salesforce reconciliation are outside
-the v1 HubSpot workflow.
+The test suite runs the audit against mocked webhook and HubSpot search
+responses. It needs no live CRM credentials.
+
+---
+
+Built by Christopher Landaverde, FOCO Systems.
+Field notes on this problem ↗ [focosys.io](https://focosys.io) ·
+[christopher@focosys.io](mailto:christopher@focosys.io)
