@@ -192,14 +192,18 @@ def _audit_browser(
     ]
     checks["landing"] = {"passed": not missing, "final_url": final_url, "missing": missing}
 
+    seen = {"other_posts": result.get("other_posts", []), "blocked_requests": result.get("blocked", [])}
     if "submitted" not in result or result.get("error"):
-        checks["form_capture"] = {"passed": False, "reason": result.get("error", "No form POST captured.")}
+        checks["form_capture"] = {
+            "passed": False, "reason": result.get("error", "No form POST captured."), **seen,
+        }
         return report
     submitted = result["submitted"]
 
     def submitted_value(field):
         candidates = [form_fields[field]] if field in form_fields else [field, browser.URL_PARAMS.get(field)]
-        return next((submitted[name] for name in candidates if name and name in submitted), None)
+        present = [submitted[name] for name in candidates if name and name in submitted]
+        return next((value for value in present if value), present[0] if present else None)
 
     mismatched = {}
     for field in browser.URL_PARAMS:
@@ -213,6 +217,7 @@ def _audit_browser(
         "submit_url": result.get("submit_url"),
         "http_status": status,
         "mismatched": mismatched,
+        **seen,
     }
 
     expected = dict(payload)

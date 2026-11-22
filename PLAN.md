@@ -11,4 +11,4 @@
 | 7 | Optional extra + version 0.2.0 | `pyproject.toml`, `leadtrace/__init__.py` | `pip install '.[browser]'` | done |
 | 8 | CI job that installs Chrome + Playwright and runs browser tests | `.github/workflows/ci.yml` | YAML parses; core matrix unchanged | done |
 | 9 | README section, FOCO brand gate | `README.md` | ship gate 1–6 | done |
-| 10 | Independent review by a different model | — | findings addressed | in review |
+| 10 | Independent review by a different model | — | findings addressed | done |

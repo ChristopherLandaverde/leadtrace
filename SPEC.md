@@ -35,7 +35,7 @@ HubSpot keep the source, medium, campaign, and click IDs?"
    `company`). The default selector is `[name=<field>]`. Override with
    `--selector FIELD=CSS`. Clicks `--submit` (default
    `[type=submit]`).
-4. Captures the first POST request after the click. Check `form_capture`:
+4. Captures the first POST after the click whose body carries the synthetic email. Check `form_capture`:
    the body must carry each tracking value. It accepts the canonical name
    or the `utm_*` alias, and `--form-field FIELD=NAME` overrides the name.
    It parses urlencoded and JSON bodies. Any other encoding fails with a
@@ -78,6 +78,9 @@ Chrome. HubSpot is mocked and no live credentials are used.
 | A6 | Without Playwright installed, the CLI exits 2 with an install hint | `test_missing_playwright_message` |
 | A7 | Existing webhook and sgtm tests still pass with no changes | `python -m unittest` |
 | A8 | Non-HTTPS non-loopback URLs are rejected in browser mode | `test_rejects_plain_http` |
+| A9 | Click-tracking POSTs before the form are not taken as the form (review) | `test_beacon_posts_are_not_the_form` |
+| A10 | A script that strips `gclid` after load fails `landing` (review) | `test_deferred_param_strip_detected` |
+| A11 | Multipart body fails with a named reason, fast | `test_multipart_named_reason` |
 
 ## Assumptions → how each is verified
 

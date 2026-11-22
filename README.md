@@ -101,17 +101,26 @@ leadtrace audit https://staging.example.com/demo \
 LeadTrace:
 1. Adds `utm_source`, `utm_medium`, `utm_campaign`, `gclid`, and `fbclid` to
    the URL and opens it in headless Chromium. It follows redirects.
-2. Check `landing`: the final URL must still carry all 5 params. The
-   report lists any that were dropped.
+2. Check `landing`: the page URL at submit time must still carry all 5
+   params. It is read after the network settles, so scripts that strip
+   params after load are caught. The report lists any that were dropped.
 3. Fills `email`, `firstname`, `lastname`, `phone`, and `company` by
    `[name=...]` (change these with `--selector FIELD=CSS`), then clicks
    `--submit` (default `[type=submit]`).
-4. Check `form_capture`: the first POST after the click must carry each
-   tracking value, under the canonical name or its `utm_*` name. If the form
-   uses other names, map them with `--form-field FIELD=NAME`.
+4. Check `form_capture`: the form POST is the first POST after the click
+   whose body carries the synthetic email. Analytics beacons and pixels are
+   listed in `other_posts` and are not mistaken for the form. That POST must
+   carry each tracking value under the canonical name or its `utm_*` name.
+   If the form uses other names, map them with `--form-field FIELD=NAME`.
+   The report shows `submit_url`, so you can confirm the form posted where
+   you expect.
 5. Searches HubSpot and compares each field, as the other modes do. The page
    creates `original_conversion_id`, so HubSpot is compared with the value the
    form submitted.
+
+The browser blocks requests to literal private and link-local IPs, such
+as `169.254.169.254`. They are listed in `blocked_requests`. Loopback stays
+allowed for local test sites.
 
 The form under test writes to HubSpot, so point it at a test portal. Exit code 2 means
 Playwright or the browser binary is missing.

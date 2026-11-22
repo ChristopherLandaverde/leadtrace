@@ -32,7 +32,13 @@ class Handler(SimpleHTTPRequestHandler):
     def do_POST(self):
         length = int(self.headers.get("Content-Length") or 0)
         raw = self.rfile.read(length).decode()
-        if self.path == "/submit-json":
+        if self.path == "/beacon":
+            self.send_response(204)
+            self.end_headers()
+            return
+        if "multipart" in (self.headers.get("Content-Type") or ""):
+            body = {"multipart": raw}
+        elif self.path == "/submit-json":
             body = json.loads(raw)
         else:
             body = {k: v[0] for k, v in parse_qs(raw, keep_blank_values=True).items()}

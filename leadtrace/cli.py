@@ -114,7 +114,7 @@ def main():
         except ValueError as exc:
             audit_p.error(str(exc))
         except BrowserUnavailable as exc:
-            print(f"× {exc}\nBrowser mode needs: pip install 'leadtrace[browser]'", file=sys.stderr)
+            print(f"× {exc}", file=sys.stderr)
             sys.exit(2)
         print(json.dumps(report, indent=2))
         sys.exit(0 if report["passed"] else 1)

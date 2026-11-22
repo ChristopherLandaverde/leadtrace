@@ -111,6 +111,36 @@ class BrowserAudit(unittest.TestCase):
         report = self.run_audit("landing.html")
         self.assertFalse(report["checks"]["original_conversion_id"]["passed"])
 
+    def test_beacon_posts_are_not_the_form(self):  # review finding 1
+        report = self.run_audit("landing-beacon.html")
+        self.assertTrue(report["passed"], json.dumps(report, indent=2))
+        capture = report["checks"]["form_capture"]
+        self.assertTrue(capture["submit_url"].endswith("/submit"))
+        self.assertTrue(capture["other_posts"])
+        self.assertTrue(all(url.endswith("/beacon") for url in capture["other_posts"]))
+
+    def test_deferred_param_strip_detected(self):  # review finding 3
+        report = self.run_audit("landing-beacon.html?strip=1")
+        self.assertEqual(report["checks"]["landing"]["missing"], ["gclid"])
+
+    def test_multipart_named_reason(self):
+        report = self.run_audit("landing-multipart.html")
+        self.assertIn("unsupported encoding", report["checks"]["form_capture"]["reason"])
+
+    def test_missing_email_field(self):
+        report = self.run_audit("landing-noemail.html")
+        self.assertEqual(report["checks"]["form_capture"]["reason"], "No email field found on the page.")
+
+    def test_form_field_mapping(self):
+        report = self.run_audit("landing-renamed.html", form_fields={"ft_campaign": "campaign_hidden"})
+        self.assertTrue(report["checks"]["form_capture"]["passed"], json.dumps(report, indent=2))
+        report = self.run_audit("landing-renamed.html")
+        self.assertIn("ft_campaign", report["checks"]["form_capture"]["mismatched"])
+
+    def test_selector_override(self):
+        report = self.run_audit("landing.html", selectors={"email": "input[type=email]"})
+        self.assertTrue(report["passed"], json.dumps(report, indent=2))
+
     def test_missing_submit_button_fails_cleanly(self):
         report = self.run_audit("landing.html", submit="#nope")
         self.assertFalse(report["passed"])
@@ -123,13 +153,33 @@ class BrowserModeGuards(unittest.TestCase):
     def test_missing_playwright_message(self):  # A6
         from leadtrace import cli
         err = io.StringIO()
-        with patch.object(browser_mod, "_load_playwright", side_effect=browser_mod.BrowserUnavailable("x")), \
+        with patch.object(browser_mod, "_load_playwright", side_effect=browser_mod.BrowserUnavailable(
+                    "Browser mode needs Playwright. Install it with: pip install 'leadtrace[browser]'")), \
                 patch.dict(os.environ, {"HUBSPOT_ACCESS_TOKEN": "t"}), \
                 patch("sys.argv", ["leadtrace", "audit", "https://example.test/lp", "--mode", "browser"]), \
                 contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as exit_info:
             cli.main()
         self.assertEqual(exit_info.exception.code, 2)
         self.assertIn("leadtrace[browser]", err.getvalue())
+
+    def test_bad_key_value_flag(self):
+        from leadtrace import cli
+        err = io.StringIO()
+        with patch.dict(os.environ, {"HUBSPOT_ACCESS_TOKEN": "t"}), \
+                patch("sys.argv", ["leadtrace", "audit", "https://example.test/lp", "--form-field", "nope"]), \
+                contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as exit_info:
+            cli.main()
+        self.assertEqual(exit_info.exception.code, 2)
+        self.assertIn("--form-field takes KEY=VALUE", err.getvalue())
+
+    def test_private_ip_hosts_blocked(self):  # review finding 4
+        self.assertTrue(browser_mod.blocked_host("http://169.254.169.254/latest/meta-data"))
+        self.assertTrue(browser_mod.blocked_host("https://10.0.0.5/x"))
+        self.assertFalse(browser_mod.blocked_host("http://127.0.0.1:8000/"))
+        self.assertFalse(browser_mod.blocked_host("https://example.com/"))
+
+    def test_text_plain_json_body(self):  # review finding 6
+        self.assertEqual(browser_mod.parse_body("text/plain", '{"email": "a"}'), {"email": "a"})
 
     def test_rejects_plain_http(self):  # A8
         with self.assertRaises(ValueError):

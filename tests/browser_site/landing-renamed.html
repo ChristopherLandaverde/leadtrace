@@ -1,0 +1,15 @@
+<!doctype html><html><body>
+<form method="post" action="/submit">
+  <label>Email <input name="email" type="email"></label>
+  <label>First <input name="firstname"></label>
+  <label>Last <input name="lastname"></label>
+  <label>Phone <input name="phone"></label>
+  <label>Company <input name="company"></label>
+  <input type="hidden" name="utm_source"><input type="hidden" name="utm_medium">
+  <input type="hidden" name="campaign_hidden"><input type="hidden" name="gclid">
+  <input type="hidden" name="fbclid"><input type="hidden" name="original_conversion_id">
+  <button type="submit">Send</button>
+</form>
+<script src="/populate.js"></script>
+<script>document.querySelector('[name=campaign_hidden]').value = new URLSearchParams(location.search).get("utm_campaign");</script>
+</body></html>

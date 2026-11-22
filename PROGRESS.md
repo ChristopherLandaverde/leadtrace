@@ -1,6 +1,6 @@
 # PROGRESS — browser form audit
 
-- Tasks 1–9 landed on `build/browser-audit`. 19/19 tests pass locally: 9 existing and 10 new, the browser ones running in real headless Chrome.
-- Exploratory CLI pass against the fixture site: clean form exit 0; redirect dropping `gclid` exit 1; unfilled hidden `utm_campaign` exit 1.
-- Lint (pyflakes) clean. Bandit (medium+) reports no findings.
-- Task 10: independent review in progress.
+- Tasks 1–10 landed on `build/browser-audit`.
+- 28/28 tests pass in 24 s: 9 existing and 19 new. The browser ones run in real headless Chrome against a local fixture site.
+- Independent review (Sonnet) found 0 blockers. All 10 findings were addressed or logged in DECISIONS.md, then re-checked by the reviewer.
+- pyflakes clean. Bandit (medium+) found nothing.
