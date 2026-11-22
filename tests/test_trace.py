@@ -64,6 +64,29 @@ class TraceRender(unittest.TestCase):
         self.assertIn("✓ sync_latency            0.4 min (SLA 120 min)", text)
         self.assertTrue(text.rstrip().endswith("× BROKEN     2 of 5 checks failed"))
 
+    def test_failed_lookup_without_reason_is_not_described_as_success(self):  # review 1
+        report = {"token": "t", "email": "e", "passed": False,
+                  "checks": {"injection": {"passed": True, "http_status": 200},
+                             "destination_lookup": {"passed": False}}}
+        out = io.StringIO()
+        trace.render_audit(report, "webhook", out)
+        self.assertIn("× destination_lookup      contact email does not match the lead", out.getvalue())
+        self.assertIn("later checks did not run", out.getvalue())
+
+    def test_sparse_checks_do_not_crash(self):  # review 2
+        report = {"token": None, "email": None, "passed": False, "checks": {
+            "sync_latency": {"passed": False, "minutes": -3.0, "sla_minutes": None},
+            "gclid": {"passed": False, "expected": "g"},
+            "form_capture": {"passed": False, "mismatched": {"gclid": {}}},
+            "mystery": {"passed": False},
+        }}
+        out = io.StringIO()
+        trace.render_audit(report, "unknown-mode", out)
+        text = out.getvalue()
+        self.assertIn("contact created before dispatch", text)
+        self.assertIn("expected g, got (missing)", text)
+        self.assertIn("× mystery                 no detail recorded", text)
+
     def test_passing_record(self):
         report = {**REPORT, "passed": True, "checks": {"ft_source": REPORT["checks"]["ft_source"]}}
         out = io.StringIO()
@@ -127,7 +150,25 @@ class CliFormats(unittest.TestCase):
         text, code = run_cli(["inject", "dry-run", "--dry-run"])
         self.assertEqual(code, 0)
         self.assertIn("LEADTRACE / INJECT\nform payload · dry run · ", text)
-        self.assertIn("✓ VERIFIED   endpoint accepted the lead · HTTP 200", text)
+        self.assertIn("✓ VERIFIED   dry run · nothing sent", text)
+
+    def test_generate_out_message_unchanged(self):
+        path = Path(self.id() + ".json")
+        self.addCleanup(lambda: path.exists() and path.unlink())
+        text, code = run_cli(["generate", "--out", str(path)])
+        self.assertEqual((code, text.strip()), (0, f"✓ Synthetic lead written to {path}"))
+
+    def test_verify_late_sync_listed_once(self):
+        lead = json.loads((FIXTURES / "sample_lead.json").read_text())
+        record = json.loads((FIXTURES / "sample_crm_record.json").read_text())
+        record["created_timestamp"] = lead["created_timestamp"] + 3 * 3600
+        path = Path(self.id() + ".json")
+        path.write_text(json.dumps(record))
+        self.addCleanup(path.unlink)
+        text, code = run_cli(["verify", "--expected", str(FIXTURES / "sample_lead.json"), "--actual", str(path)])
+        self.assertEqual(code, 1)
+        self.assertEqual(text.count("sync_latency"), 1)
+        self.assertIn("× sync_latency            180.0 min (SLA 120 min)", text)
 
 
 if __name__ == "__main__":

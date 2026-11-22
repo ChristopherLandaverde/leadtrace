@@ -65,7 +65,7 @@ def main():
         out_str = json.dumps(payload, indent=2)
         if args.out:
             Path(args.out).write_text(out_str, encoding="utf-8")
-            print(trace._safe(f"→ {args.format} payload written to {args.out}", sys.stdout))
+            print(trace._safe(f"✓ Synthetic lead written to {args.out}", sys.stdout))
         else:
             print(out_str)
         sys.exit(0)
@@ -78,8 +78,11 @@ def main():
         trace.row("↓ TRACED", f"POST → {args.url}")
         res = inject_lead(url=args.url, payload=payload, dry_run=args.dry_run)
         detail = f"HTTP {res.status_code}" + (f" · {res.error_message}" if res.error_message else "")
-        trace.verdict(res.success, ("endpoint accepted the lead · " if res.success
-                                    else "endpoint rejected the lead · ") + detail)
+        if res.is_dry_run:
+            trace.verdict(True, "dry run · nothing sent")
+        else:
+            trace.verdict(res.success, ("endpoint accepted the lead · " if res.success
+                                        else "endpoint rejected the lead · ") + detail)
         sys.exit(0 if res.success else 1)
 
     elif args.command == "verify":
@@ -97,6 +100,8 @@ def main():
             mark, shown = trace.status(latency <= args.max_latency), f"{latency:.1f} min"
         print(trace._safe(f"{mark} {'sync_latency':<{trace.NAME}}{shown} (SLA {args.max_latency:g} min)", sys.stdout))
         for issue in res.errors:
+            if issue.field == "sync_latency":
+                continue  # already shown above
             print(trace._safe(f"{trace.status(False)} {issue.field:<{trace.NAME}}{issue.description}", sys.stdout))
         for issue in res.warnings:
             print(trace._safe(f"□ {issue.field:<{trace.NAME}}warning · {issue.description}", sys.stdout))
@@ -129,7 +134,10 @@ def main():
             sys.exit(2)
         use_trace = args.format == "trace" or (args.format == "auto" and sys.stdout.isatty())
         if use_trace:
-            trace.render_audit(report, args.mode)
+            try:
+                trace.render_audit(report, args.mode)
+            except Exception:  # never lose a finished audit to a rendering bug
+                print(json.dumps(report, indent=2))
         else:
             print(json.dumps(report, indent=2))
         sys.exit(0 if report["passed"] else 1)

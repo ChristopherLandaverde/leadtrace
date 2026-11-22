@@ -32,3 +32,4 @@ Decided without approval. Each one is reversible on this branch.
 - **Plex Mono lacks `□`, and its `✓` reads as `V` at display size.** Inter is used for those two glyphs in the preview image.
 - **ASCII fallback for terminals that cannot encode the glyphs** (Windows cp1252): `□ -` `↓ v` `× x` `✓ +`.
 - **The README example is real output** from the local test site, not hand-written.
+- **Review (Sonnet): 0 blockers, 3 should-fix, all fixed.** Failure details now come from each check's own pass/fail. The renderer tolerates missing keys, and a render error falls back to JSON so a finished audit is never lost. A late sync shows once in `verify`. Nits fixed: the `generate --out` message is unchanged from before, the dry run says "nothing sent", early stops say later checks did not run, and negative latency is explained. Nit kept: a `created_timestamp` of 0 counts as missing (old behavior, unrealistic value).

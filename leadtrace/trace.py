@@ -43,34 +43,44 @@ def status(passed, stream=None):
 
 
 def _detail(name, check):
-    if "reason" in check:
+    """Evidence text for one check. Built from the check's own pass/fail, never from its name alone."""
+    passed = bool(check.get("passed"))
+    if check.get("reason"):
         return check["reason"]
     if name == "landing":
-        if check.get("missing"):
-            return "dropped on the way: " + ", ".join(check["missing"])
-        return "5/5 tracking params on the URL at submit"
+        missing = check.get("missing") or []
+        if missing:
+            return "dropped on the way: " + ", ".join(missing)
+        return "all tracking params on the URL at submit" if passed else "no detail recorded"
     if name == "form_capture":
         bits = [f"POST {_short(check.get('submit_url'), 40)} · HTTP {check.get('http_status')}"]
         for field, diff in (check.get("mismatched") or {}).items():
-            bits.append(f"{field}: expected {_short(diff['expected'], 24)}, got {_short(diff['actual'], 24)}")
+            diff = diff if isinstance(diff, dict) else {}
+            bits.append(f"{field}: expected {_short(diff.get('expected'), 24)}, got {_short(diff.get('actual'), 24)}")
         if check.get("other_posts"):
             bits.append(f"{len(check['other_posts'])} other POST(s) ignored")
         return " · ".join(bits)
     if name == "sync_latency":
-        minutes = check.get("minutes")
-        shown = "unknown" if minutes is None else f"{minutes:.1f} min"
-        return f"{shown} (SLA {check.get('sla_minutes'):g} min)"
+        minutes, sla = check.get("minutes"), check.get("sla_minutes")
+        sla_text = f" (SLA {sla:g} min)" if isinstance(sla, (int, float)) else ""
+        if minutes is None:
+            return "unknown · no usable createdate" + sla_text
+        if minutes < 0:
+            return f"{minutes:.1f} min · contact created before dispatch (clock skew or a reused contact)"
+        return f"{minutes:.1f} min{sla_text}"
     if name == "injection":
         return f"HTTP {check.get('http_status')}"
     if name == "capi_handshake":
-        return "event_id and hashed em/ph match" if check["passed"] else "event_id or hashed em/ph differ"
+        return "event_id and hashed em/ph match" if passed else "event_id or hashed em/ph differ"
     if name == "destination_lookup":
-        return f"HTTP {check['http_status']}" if "http_status" in check else "one contact, exact email"
+        if "http_status" in check:
+            return f"HTTP {check['http_status']}"
+        return "one contact, exact email" if passed else "contact email does not match the lead"
     if "expected" in check:
-        if check["passed"]:
-            return _short(check["actual"])
-        return f"expected {_short(check['expected'], 30)}, got {_short(check['actual'], 30)}"
-    return ""
+        if passed:
+            return _short(check.get("actual"))
+        return f"expected {_short(check.get('expected'), 30)}, got {_short(check.get('actual'), 30)}"
+    return "" if passed else "no detail recorded"
 
 
 def header(title, meta, stream=None):
@@ -99,18 +109,21 @@ def render_audit(report, mode, stream=None):
         "webhook": "POST to endpoint → HubSpot contact search",
         "sgtm": "POST to endpoint → CAPI receipt → HubSpot contact search",
         "browser": "landing page → form POST → HubSpot contact search",
-    }[mode]
+    }.get(mode, mode)
     header("AUDIT", f"{mode} mode", stream)
-    row("□ OBSERVED", f"lead {_short(report['token'], 40)}", stream)
-    row("", report["email"], stream)
+    row("□ OBSERVED", f"lead {_short(report.get('token'), 40)}", stream)
+    row("", str(report.get("email")), stream)
     row("↓ TRACED", path, stream)
     print(file=stream)
-    checks = report["checks"]
+    checks = report.get("checks") or {}
     for name, check in checks.items():
-        line = f"{status(check['passed'], stream)} {name:<{NAME}}{_detail(name, check)}"
+        line = f"{status(bool(check.get('passed')), stream)} {name:<{NAME}}{_detail(name, check)}"
         print(_safe(line, stream), file=stream)
-    failed = sum(not check["passed"] for check in checks.values())
-    if report["passed"]:
+    failed = sum(not check.get("passed") for check in checks.values())
+    if report.get("passed"):
         verdict(True, f"{len(checks)} of {len(checks)} checks passed", stream)
     else:
-        verdict(False, f"{failed} of {len(checks)} checks failed", stream)
+        # The audit stops at the first handoff that breaks, so later checks may never have run.
+        stopped = "sync_latency" not in checks
+        verdict(False, f"{failed} of {len(checks)} checks failed" + (" · later checks did not run" if stopped else ""),
+                stream)
