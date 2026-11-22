@@ -82,6 +82,38 @@ The audit:
 If the contact is not in search results by the deadline, the audit reports
 a timeout.
 
+### Output
+
+On a terminal, `audit` prints a trace record. When piped or run in CI, it
+prints JSON. `--format json` or `--format trace` forces one or the other.
+Real output from the local test site: a redirect drops `gclid` before the
+form loads (synthetic data, no client data):
+
+```
+LEADTRACE / AUDIT
+browser mode · 2026-11-22 14:51 UTC · synthetic lead, test data only
+
+□ OBSERVED   lead foco_1795359099_206acde95f0a418eaa95ce6…
+             foco_test+foco_1795359099_206acde95f0a418eaa95ce61aa2ea070@test.focosys.io
+↓ TRACED     landing page → form POST → HubSpot contact search
+
+× landing                 dropped on the way: gclid
+× form_capture            POST http://127.0.0.1:43269/submit · HTTP 200 · gclid: expected gclid_syn_foco_17953590…, got ""
+✓ destination_lookup      one contact, exact email
+✓ ft_source               google_ads
+✓ ft_medium               cpc
+✓ ft_campaign             audit_test
+✓ original_conversion_id  conv_page_1173305d641858
+× gclid                   expected gclid_syn_foco_1795359099_206…, got ""
+✓ fbclid                  fbclid_syn_foco_1795359099_206acde95f0a418eaa95…
+✓ sync_latency            0.0 min (SLA 120 min)
+
+× BROKEN     3 of 10 checks failed
+```
+
+Status color (red `×`, green `✓`) shows only on a TTY and respects
+`NO_COLOR`. `verify` and `inject` print the same kind of record.
+
 ### Browser form
 
 `--mode browser` runs the path a real ad click takes. Install the extra
