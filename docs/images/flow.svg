@@ -12,6 +12,7 @@
     .l{font:600 11px 'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;fill:#426B5D;letter-spacing:.06em}
     .a{fill:none;stroke:#10231F;stroke-opacity:.45;stroke-width:1.5}
   </style>
+  <rect width="880" height="300" fill="#F3F0E6"/>
   <defs><marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#10231F" fill-opacity=".45"/></marker></defs>
 
   <text class="l" x="16" y="24">□ OBSERVED</text>
